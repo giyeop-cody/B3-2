@@ -9,7 +9,7 @@ Current branch: main
 Current user: Alice
 
 mini-git> commit "Initial commit"
-[main ad48cc] Initial commit
+[main 17af75] Initial commit
 
 mini-git> branch feature
 Created branch: feature
@@ -18,62 +18,62 @@ mini-git> switch feature
 Switched to branch: feature
 
 mini-git> commit "Add login feature"
-[feature f826d4] Add login feature
+[feature 5c376c] Add login feature
 
 mini-git> switch main
 Switched to branch: main
 
 mini-git> commit "Add payment feature"
-[main 6b666f] Add payment feature
+[main d422b0] Add payment feature
 
 mini-git> log
-commit ad48cc (Alice, 2026-06-04 09:10:11) [main]
+commit 17af75 (Alice, 2026-07-29 08:11:01) [main]
 Initial commit
-commit f826d4 (Alice, 2026-06-04 09:10:11) [feature]
+commit 5c376c (Alice, 2026-07-29 08:11:01) [feature]
 Add login feature
-commit 6b666f (Alice, 2026-06-04 09:10:11) [main]
+commit d422b0 (Alice, 2026-07-29 08:11:01) [main]
 Add payment feature
 
-mini-git> path ad48cc 6b666f
-Path: ad48cc -> 6b666f
+mini-git> path 17af75 d422b0
+Path: 17af75 -> d422b0
 
-mini-git> ancestors 6b666f
-Ancestors of 6b666f:
-- ad48cc: Initial commit
+mini-git> ancestors d422b0
+Ancestors of d422b0:
+- 17af75: Initial commit
 
 mini-git> search "login"
 Found 1 commit:
-- f826d4: Add login feature
+- 5c376c: Add login feature
 
 mini-git> search --author="Alice"
 Found 3 commits:
-- f826d4: Add login feature
-- 6b666f: Add payment feature
-- ad48cc: Initial commit
+- 17af75: Initial commit
+- 5c376c: Add login feature
+- d422b0: Add payment feature
 
 mini-git> log --sort-by=date
-commit ad48cc (Alice, 2026-06-04 09:10:11)
+commit 17af75 (Alice, 2026-07-29 08:11:01)
 Initial commit
-commit f826d4 (Alice, 2026-06-04 09:10:11)
+commit 5c376c (Alice, 2026-07-29 08:11:01)
 Add login feature
-commit 6b666f (Alice, 2026-06-04 09:10:11)
+commit d422b0 (Alice, 2026-07-29 08:11:01)
 Add payment feature
 
 mini-git> log --sort-by=author
-commit ad48cc (Alice, 2026-06-04 09:10:11)
+commit 17af75 (Alice, 2026-07-29 08:11:01)
 Initial commit
-commit f826d4 (Alice, 2026-06-04 09:10:11)
+commit 5c376c (Alice, 2026-07-29 08:11:01)
 Add login feature
-commit 6b666f (Alice, 2026-06-04 09:10:11)
+commit d422b0 (Alice, 2026-07-29 08:11:01)
 Add payment feature
 
 mini-git> merge feature
 Merged branch feature into main.
-[main 5d3881] Merge branch 'feature' into main
+[main 21f380] Merge branch 'feature' into main
 
 mini-git> sort-compare
 [Sort Algorithm Performance Comparison]
-Size:  100 | Merge Sort:   0.17ms | Bubble Sort:   0.28ms
-Size:  500 | Merge Sort:   1.05ms | Bubble Sort:   8.70ms
-Size: 1000 | Merge Sort:   2.24ms | Bubble Sort:  44.87ms
+Size:  100 | Merge Sort:   0.29ms | Bubble Sort:   0.42ms
+Size:  500 | Merge Sort:   1.80ms | Bubble Sort:  13.90ms
+Size: 1000 | Merge Sort:   3.81ms | Bubble Sort:  53.82ms
 ```

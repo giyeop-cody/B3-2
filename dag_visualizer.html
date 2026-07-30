@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Git DAG & 위상 정렬 대화형 시각화 가이드</title>
+  <style>
+    :root {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --accent-blue: #38bdf8;
+      --accent-green: #4ade80;
+      --accent-purple: #c084fc;
+      --accent-orange: #fb923c;
+      --accent-red: #f87171;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 24px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 2.2rem;
+      color: var(--accent-blue);
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--card-border);
+      padding-bottom: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      background: #334155;
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: var(--accent-blue);
+      color: #0f172a;
+      border-color: var(--accent-blue);
+    }
+
+    /* Tab Content Panels */
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    }
+
+    .card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 16px;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* SVG Canvas Area */
+    .viz-canvas {
+      width: 100%;
+      height: 320px;
+      background: #090d16;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    /* Simulation Controls */
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 10px 18px;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn:hover {
+      opacity: 0.85;
+    }
+
+    .btn-primary { background: var(--accent-blue); color: #0f172a; }
+    .btn-success { background: var(--accent-green); color: #0f172a; }
+    .btn-warning { background: var(--accent-orange); color: #0f172a; }
+    .btn-danger { background: var(--accent-red); color: #ffffff; }
+
+    .btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* Status Grid */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .status-box {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      padding: 16px;
+      border-radius: 8px;
+    }
+
+    .status-box h4 {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-value {
+      font-family: monospace;
+      font-size: 1.1rem;
+      color: var(--accent-green);
+    }
+
+    .log-box {
+      background: #050811;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 0.95rem;
+      color: var(--accent-blue);
+      min-height: 80px;
+      white-space: pre-wrap;
+    }
+
+    /* Explanation Text Box */
+    .explanation {
+      background: rgba(56, 189, 248, 0.08);
+      border-left: 4px solid var(--accent-blue);
+      padding: 16px;
+      border-radius: 4px;
+      margin-top: 16px;
+      font-size: 0.98rem;
+    }
+
+    /* SVG Nodes & Edges */
+    .node {
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .node circle {
+      stroke-width: 3px;
+    }
+
+    .node text {
+      font-family: monospace;
+      font-weight: bold;
+      font-size: 14px;
+      fill: #ffffff;
+      text-anchor: middle;
+      dominant-baseline: central;
+    }
+
+    .node-subtext {
+      font-size: 11px !important;
+      fill: var(--text-muted) !important;
+    }
+
+    /* Node States */
+    .node-idle circle { fill: #1e293b; stroke: #64748b; }
+    .node-active circle { fill: #0284c7; stroke: #38bdf8; filter: drop-shadow(0 0 8px #38bdf8); }
+    .node-visited circle { fill: #15803d; stroke: #4ade80; filter: drop-shadow(0 0 8px #4ade80); }
+    .node-processing circle { fill: #b45309; stroke: #fb923c; filter: drop-shadow(0 0 8px #fb923c); }
+
+    .edge {
+      stroke: #475569;
+      stroke-width: 2.5;
+      fill: none;
+      transition: all 0.3s ease;
+    }
+
+    .edge-active {
+      stroke: var(--accent-blue);
+      stroke-width: 4;
+    }
+
+    .edge-visited {
+      stroke: var(--accent-green);
+      stroke-width: 3.5;
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>🌳 Mini Git DAG & 위상 정렬 동적 시각화</h1>
+    <p>버튼을 클릭하거나 슬라이드를 조작하여 그래프 알고리즘의 동작 과정을 시각적으로 체득하세요.</p>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('topo')">1. 위상 정렬 (Kahn's Algo)</button>
+    <button class="tab-btn" onclick="switchTab('dag')">2. DAG vs Tree vs Cycle</button>
+    <button class="tab-btn" onclick="switchTab('bfs')">3. 무방향 BFS 최단경로</button>
+    <button class="tab-btn" onclick="switchTab('index')">4. 역색인 vs 선형 순회</button>
+  </div>
+
+  <!-- TAB 1: Topological Sort (Kahn's Algorithm) -->
+  <div id="tab-topo" class="tab-panel active">
+    <div class="card">
+      <h2>📌 Kahn's Algorithm 위상 정렬 대화형 시뮬레이터</h2>
+      <p style="color: var(--text-muted); margin-bottom: 16px;">
+        부모 커밋의 진입 차수(Indegree)가 0이 될 때 큐에 넣어 정렬함으로써, <strong>부모 커밋이 자식 커밋보다 항상 먼저 출력</strong>되도록 만듭니다.
+      </p>
+
+      <div class="viz-canvas">
+        <svg id="topo-svg" width="100%" height="100%" viewBox="0 0 800 300">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b" />
+            </marker>
+            <marker id="arrow-active" viewBox="0 0 10 10" refX="28" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8" />
+            </marker>
+          </defs>
+
+          <!-- Edges (c2 -> c1, c3 -> c1, c4 -> c2, c4 -> c3) : Child points to Parent in Git -->
+          <line id="edge-c2-c1" x1="300" y1="100" x2="150" y2="150" class="edge" marker-end="url(#arrow)"/>
+          <line id="edge-c3-c1" x1="300" y1="200" x2="150" y2="150" class="edge" marker-end="url(#arrow)"/>
+          <line id="edge-c4-c2" x1="500" y1="150" x2="300" y2="100" class="edge" marker-end="url(#arrow)"/>
+          <line id="edge-c4-c3" x1="500" y1="150" x2="300" y2="200" class="edge" marker-end="url(#arrow)"/>
+
+          <!-- Nodes -->
+          <g id="node-c1" class="node node-idle" transform="translate(150, 150)">
+            <circle r="28" />
+            <text y="-2">c1</text>
+            <text class="node-subtext" y="42">c1 (Initial)</text>
+          </g>
+
+          <g id="node-c2" class="node node-idle" transform="translate(300, 100)">
+            <circle r="28" />
+            <text y="-2">c2</text>
+            <text class="node-subtext" y="42">c2 (login)</text>
+          </g>
+
+          <g id="node-c3" class="node node-idle" transform="translate(300, 200)">
+            <circle r="28" />
+            <text y="-2">c3</text>
+            <text class="node-subtext" y="42">c3 (payment)</text>
+          </g>
+
+          <g id="node-c4" class="node node-idle" transform="translate(500, 150)">
+            <circle r="28" />
+            <text y="-2">c4</text>
+            <text class="node-subtext" y="42">c4 (Merge)</text>
+          </g>
+        </svg>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls">
+        <button class="btn btn-primary" onclick="topoStepPrev()" id="btn-prev" disabled>◀ 이전 단계</button>
+        <button class="btn btn-success" onclick="topoStepNext()" id="btn-next">다음 단계 ▶</button>
+        <button class="btn btn-warning" onclick="topoToggleAuto()" id="btn-auto">▶ 자동 재생</button>
+        <button class="btn btn-danger" onclick="topoReset()">🔄 초기화</button>
+        <span style="margin-left: auto; color: var(--text-muted); font-size: 0.9rem;">
+          진행 단계: <strong id="step-indicator" style="color: var(--accent-blue);">0 / 4</strong>
+        </span>
+      </div>
+
+      <!-- Status Monitors -->
+      <div class="status-grid">
+        <div class="status-box">
+          <h4>현재 진입 차수 (Indegree Table)</h4>
+          <div class="status-value" id="indegree-display">c1: 0 | c2: 1 | c3: 1 | c4: 2</div>
+        </div>
+        <div class="status-box">
+          <h4>대기 큐 (Queue)</h4>
+          <div class="status-value" id="queue-display">[ c1 ]</div>
+        </div>
+      </div>
+
+      <div class="status-box" style="margin-bottom: 16px;">
+        <h4>정렬 출력 결과 (Topological Output Log)</h4>
+        <div class="log-box" id="log-display">대기 중... '다음 단계' 버튼을 누르세요.</div>
+      </div>
+
+      <div class="explanation" id="topo-explanation">
+        💡 <strong>초기 상태</strong>: 루트 커밋인 <code>c1</code>은 자식 관점에서 진입 차수(Indegree, 나를 가리키는 부모의 수)가 0이므로 대기 큐에 가장 먼저 들어갑니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: DAG vs Tree vs Cycle -->
+  <div id="tab-dag" class="tab-panel">
+    <div class="card">
+      <h2>📌 자료구조 비교: 왜 Git은 DAG를 선택했는가?</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-top: 16px;">
+        
+        <div style="background: #0f172a; border: 1px solid var(--card-border); padding: 16px; border-radius: 8px;">
+          <h3 style="color: var(--accent-red); margin-bottom: 8px;">1. 선형 리스트 (Linear List)</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">(c1) ──► (c2) ──► (c3)</p>
+          <p style="font-size: 0.88rem;">❌ <strong>한계</strong>: 줄기가 1개뿐이므로 여러 개발자가 동시 작업하는 '브랜치 분기'를 만들 수 없습니다.</p>
+        </div>
+
+        <div style="background: #0f172a; border: 1px solid var(--card-border); padding: 16px; border-radius: 8px;">
+          <h3 style="color: var(--accent-orange); margin-bottom: 8px;">2. 트리 (Tree)</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">(c1) ──► (c2), (c3) 분기</p>
+          <p style="font-size: 0.88rem;">❌ <strong>한계</strong>: 자식이 갈라질 수는 있지만, 2개 이상의 부모를 가지는 '머지 커밋(Merge Commit)'을 생성할 수 없습니다.</p>
+        </div>
+
+        <div style="background: #0f172a; border: 2px solid var(--accent-green); padding: 16px; border-radius: 8px;">
+          <h3 style="color: var(--accent-green); margin-bottom: 8px;">3. DAG (Directed Acyclic Graph) ★</h3>
+          <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 12px;">분기 및 머지(다중 부모) 완벽 지원</p>
+          <p style="font-size: 0.88rem;">✅ <strong>선택 이유</strong>: 브랜치 분기 및 머지 노드를 유연하게 표현하면서도, 순환(Cycle)이 없어 시간의 인과성을 완전 보장합니다.</p>
+        </div>
+
+      </div>
+
+      <div class="explanation" style="margin-top: 20px;">
+        ⚠️ <strong>만약 사이클(Cycle)이 생긴다면?</strong><br>
+        미래 커밋이 과거 커밋의 부모가 되는 '시간 여행 역설'이 발생합니다. 그 결과 모든 노드의 진입 차수가 1 이상이 되어 Kahn's Algorithm에서 큐에 들어갈 노드가 소멸하므로 위상 정렬이 불가능해집니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: Undirected BFS -->
+  <div id="tab-bfs" class="tab-panel">
+    <div class="card">
+      <h2>📌 PATH 명령을 위한 무방향 BFS 최단 경로 시각화</h2>
+      <p style="color: var(--text-muted); margin-bottom: 16px;">
+        Git의 원본 포인터는 자식 $\rightarrow$ 부모 단방향입니다. 서로 다른 브랜치(<code>c2: feature</code>와 <code>c3: main</code>) 간 이동을 위해서 간선을 <strong>무방향(Undirected)</strong>으로 재정의한 후 BFS 레벨 탐색을 수행합니다.
+      </p>
+
+      <div class="viz-canvas" style="height: 260px;">
+        <svg width="100%" height="100%" viewBox="0 0 800 240">
+          <line x1="250" y1="120" x2="400" y2="120" stroke="#38bdf8" stroke-width="3" />
+          <line x1="400" y1="120" x2="550" y2="120" stroke="#38bdf8" stroke-width="3" />
+
+          <g transform="translate(250, 120)">
+            <circle r="26" fill="#0284c7" stroke="#38bdf8" stroke-width="3" />
+            <text fill="#fff" text-anchor="middle" dominant-baseline="central" font-weight="bold">c2</text>
+            <text y="40" fill="#94a3b8" text-anchor="middle" font-size="12">feature branch</text>
+          </g>
+
+          <g transform="translate(400, 120)">
+            <circle r="26" fill="#15803d" stroke="#4ade80" stroke-width="3" />
+            <text fill="#fff" text-anchor="middle" dominant-baseline="central" font-weight="bold">c1</text>
+            <text y="40" fill="#94a3b8" text-anchor="middle" font-size="12">공통 조상 (Ancestor)</text>
+          </g>
+
+          <g transform="translate(550, 120)">
+            <circle r="26" fill="#0284c7" stroke="#38bdf8" stroke-width="3" />
+            <text fill="#fff" text-anchor="middle" dominant-baseline="central" font-weight="bold">c3</text>
+            <text y="40" fill="#94a3b8" text-anchor="middle" font-size="12">main branch</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="status-box">
+        <h4>탐색 경로 결과</h4>
+        <div class="status-value">Path: c2 -&gt; c1 -&gt; c3 (간선 거리: 2)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: Inverted Index vs Linear Scan -->
+  <div id="tab-index" class="tab-panel">
+    <div class="card">
+      <h2>📌 역색인 (Inverted Index) O(1) 탐색 원리</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+        
+        <div style="background: #0f172a; border: 1px solid var(--card-border); padding: 16px; border-radius: 8px;">
+          <h3 style="color: var(--accent-red); margin-bottom: 12px;">🐢 선형 순회 (Linear Scan) - O(N × L)</h3>
+          <div style="font-family: monospace; font-size: 0.85rem; background: #050811; padding: 12px; border-radius: 6px; line-height: 1.8;">
+            Commit 1: "Initial commit" (검색 중...)<br>
+            Commit 2: "Add payment feature" (검색 중...)<br>
+            ...<br>
+            Commit 100000: "Add login" (발견!)<br>
+            <span style="color: var(--accent-red);">➡️ 10만 번 독해 후 탐색 완료 (매우 느림)</span>
+          </div>
+        </div>
+
+        <div style="background: #0f172a; border: 1px solid var(--accent-green); padding: 16px; border-radius: 8px;">
+          <h3 style="color: var(--accent-green); margin-bottom: 12px;">⚡ 역색인 해시맵 (Inverted Index) - O(1)</h3>
+          <div style="font-family: monospace; font-size: 0.85rem; background: #050811; padding: 12px; border-radius: 6px; line-height: 1.8;">
+            dict["initial"] ──► { c1 }<br>
+            dict["login"]   ──► { c2, c5 } <span style="color: var(--accent-green);">★ 즉시 반환!</span><br>
+            dict["payment"] ──► { c3 }<br>
+            <span style="color: var(--accent-green);">➡️ 0.0001초 만에 해시 버킷 버퍼 조회 완료</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Tab Switching Logic
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tabId).classList.add('active');
+  }
+
+  // Kahn's Algorithm Interactive Simulator State Machine
+  const topoSteps = [
+    {
+      step: 0,
+      indegree: "c1: 0 | c2: 1 | c3: 1 | c4: 2",
+      queue: "[ c1 ]",
+      log: "대기 중... '다음 단계' 버튼을 누르세요.",
+      explanation: "💡 <b>초기 상태</b>: 루트 커밋인 <code>c1</code>은 부모가 없으므로 진입 차수(Indegree)가 0입니다. 따라서 대기 큐에 가장 먼저 들어갑니다.",
+      nodes: { c1: "active", c2: "idle", c3: "idle", c4: "idle" },
+      edges: { "c2-c1": "", "c3-c1": "", "c4-c2": "", "c4-c3": "" }
+    },
+    {
+      step: 1,
+      indegree: "c1: 0 | c2: 0 (차감!) | c3: 0 (차감!) | c4: 2",
+      queue: "[ c2, c3 ]",
+      log: "commit c1 (Alice) [main]\nInitial commit",
+      explanation: "🔄 <b>1단계</b>: 큐에서 <code>c1</code>을 추출하여 출력하고, <code>c1</code>의 자식들(<code>c2</code>, <code>c3</code>)의 진입 차수를 1씩 깎습니다. 진입 차수가 0이 된 <code>c2</code>, <code>c3</code>가 큐에 푸시됩니다.",
+      nodes: { c1: "visited", c2: "active", c3: "active", c4: "idle" },
+      edges: { "c2-c1": "edge-active", "c3-c1": "edge-active", "c4-c2": "", "c4-c3": "" }
+    },
+    {
+      step: 2,
+      indegree: "c1: 0 | c2: 0 | c3: 0 | c4: 1 (차감!)",
+      queue: "[ c3 ]",
+      log: "commit c1 (Alice) [main]\nInitial commit\n\ncommit c2 (Alice) [feature]\nAdd login feature",
+      explanation: "🔄 <b>2단계</b>: 큐에서 <code>c2</code>를 추출하여 출력하고, <code>c2</code>의 자식인 <code>c4</code>의 진입 차수를 1 차감합니다 (2 -> 1).",
+      nodes: { c1: "visited", c2: "visited", c3: "active", c4: "processing" },
+      edges: { "c2-c1": "edge-visited", "c3-c1": "edge-active", "c4-c2": "edge-active", "c4-c3": "" }
+    },
+    {
+      step: 3,
+      indegree: "c1: 0 | c2: 0 | c3: 0 | c4: 0 (차감 완료!)",
+      queue: "[ c4 ]",
+      log: "commit c1 (Alice) [main]\nInitial commit\n\ncommit c2 (Alice) [feature]\nAdd login feature\n\ncommit c3 (Alice) [main]\nAdd payment feature",
+      explanation: "🔄 <b>3단계</b>: 큐에서 <code>c3</code>를 추출하여 출력하고, <code>c3</code>의 자식인 <code>c4</code>의 진입 차수를 1 차감합니다 (1 -> 0). 드디어 진입 차수가 0이 된 <code>c4</code>가 큐에 푸시됩니다.",
+      nodes: { c1: "visited", c2: "visited", c3: "visited", c4: "active" },
+      edges: { "c2-c1": "edge-visited", "c3-c1": "edge-visited", "c4-c2": "edge-visited", "c4-c3": "edge-active" }
+    },
+    {
+      step: 4,
+      indegree: "c1: 0 | c2: 0 | c3: 0 | c4: 0",
+      queue: "[ ] (비어있음 - 정렬 완료)",
+      log: "commit c1 (Alice) [main]\nInitial commit\n\ncommit c2 (Alice) [feature]\nAdd login feature\n\ncommit c3 (Alice) [main]\nAdd payment feature\n\ncommit c4 (Alice) [main]\nMerge branch 'feature' into main",
+      explanation: "🎉 <b>완료</b>: 큐에서 <code>c4</code>를 추출하여 출력을 완성합니다. 부모 커밋(c1, c2, c3)이 자식 커밋(c4)보다 항상 먼저 출력되는 위상 정렬이 완료되었습니다!",
+      nodes: { c1: "visited", c2: "visited", c3: "visited", c4: "visited" },
+      edges: { "c2-c1": "edge-visited", "c3-c1": "edge-visited", "c4-c2": "edge-visited", "c4-c3": "edge-visited" }
+    }
+  ];
+
+  let currentStep = 0;
+  let autoPlayTimer = null;
+
+  function renderTopoStep(stepIdx) {
+    const s = topoSteps[stepIdx];
+    document.getElementById("step-indicator").innerText = `${s.step} / 4`;
+    document.getElementById("indegree-display").innerText = s.indegree;
+    document.getElementById("queue-display").innerText = s.queue;
+    document.getElementById("log-display").innerText = s.log;
+    document.getElementById("topo-explanation").innerHTML = s.explanation;
+
+    // Node classes update
+    ["c1", "c2", "c3", "c4"].forEach(id => {
+      const nodeEl = document.getElementById("node-" + id);
+      nodeEl.className.baseVal = `node node-${s.nodes[id]}`;
+    });
+
+    // Edge classes update
+    ["c2-c1", "c3-c1", "c4-c2", "c4-c3"].forEach(id => {
+      const edgeEl = document.getElementById("edge-" + id);
+      edgeEl.className.baseVal = `edge ${s.edges[id]}`;
+    });
+
+    // Buttons
+    document.getElementById("btn-prev").disabled = (stepIdx === 0);
+    document.getElementById("btn-next").disabled = (stepIdx === topoSteps.length - 1);
+  }
+
+  function topoStepNext() {
+    if (currentStep < topoSteps.length - 1) {
+      currentStep++;
+      renderTopoStep(currentStep);
+    } else {
+      stopAutoPlay();
+    }
+  }
+
+  function topoStepPrev() {
+    if (currentStep > 0) {
+      currentStep--;
+      renderTopoStep(currentStep);
+    }
+  }
+
+  function topoReset() {
+    stopAutoPlay();
+    currentStep = 0;
+    renderTopoStep(currentStep);
+  }
+
+  function topoToggleAuto() {
+    if (autoPlayTimer) {
+      stopAutoPlay();
+    } else {
+      document.getElementById("btn-auto").innerText = "⏸ 일시 정지";
+      autoPlayTimer = setInterval(() => {
+        if (currentStep < topoSteps.length - 1) {
+          topoStepNext();
+        } else {
+          stopAutoPlay();
+        }
+      }, 1500);
+    }
+  }
+
+  function stopAutoPlay() {
+    if (autoPlayTimer) {
+      clearInterval(autoPlayTimer);
+      autoPlayTimer = null;
+      document.getElementById("btn-auto").innerText = "▶ 자동 재생";
+    }
+  }
+
+  // Initial Render
+  renderTopoStep(0);
+</script>
+
+</body>
+</html>
