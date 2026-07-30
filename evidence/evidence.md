@@ -22,13 +22,13 @@ mini-git> switch feature
 Switched to branch: feature
 
 mini-git> commit "Add login feature"
-[feature 0e5207] Add login feature
+[feature 947b3f] Add login feature
 
 mini-git> switch main
 Switched to branch: main
 
 mini-git> commit "Add payment feature"
-[main b343f1] Add payment feature
+[main ab33b3] Add payment feature
 ```
 
 ---
@@ -39,19 +39,19 @@ DAG 구조를 바탕으로 `LOG` 위상 정렬, `PATH` 최단 경로, `ANCESTORS
 
 ```
 mini-git> log
-commit 34f589 (Alice, 2026-06-04 08:22:53) [main]
+commit b59a92 (Alice, 2026-07-29 08:11:01) [main]
 Initial commit
-commit 46b83b (Alice, 2026-06-04 08:22:53) [feature]
+commit d98e3f (Alice, 2026-07-29 08:11:01) [feature]
 Add login feature
-commit cbeacd (Alice, 2026-06-04 08:22:53) [main]
+commit 482cdf (Alice, 2026-07-29 08:11:01) [main]
 Add payment feature
 
-mini-git> path 34f589 cbeacd
-Path: 34f589 -> cbeacd
+mini-git> path b59a92 482cdf
+Path: b59a92 -> 482cdf
 
-mini-git> ancestors 46b83b
-Ancestors of 46b83b:
-- 34f589: Initial commit
+mini-git> ancestors d98e3f
+Ancestors of d98e3f:
+- b59a92: Initial commit
 ```
 
 ---
@@ -63,28 +63,28 @@ Ancestors of 46b83b:
 ```
 mini-git> search "login"
 Found 1 commit:
-- d882b3: Add login feature
+- 49be5e: Add login feature
 
 mini-git> search --author="Alice"
 Found 3 commits:
-- 3f4676: Initial commit
-- d882b3: Add login feature
-- 42f332: Add payment feature
+- 232df4: Initial commit
+- 49be5e: Add login feature
+- dc2b15: Add payment feature
 
 mini-git> log --sort-by=date
-commit 3f4676 (Alice, 2026-06-04 08:22:53)
+commit 232df4 (Alice, 2026-07-29 08:11:01)
 Initial commit
-commit d882b3 (Alice, 2026-06-04 08:22:53)
+commit 49be5e (Alice, 2026-07-29 08:11:01)
 Add login feature
-commit 42f332 (Alice, 2026-06-04 08:22:53)
+commit dc2b15 (Alice, 2026-07-29 08:11:01)
 Add payment feature
 
 mini-git> log --sort-by=author
-commit 3f4676 (Alice, 2026-06-04 08:22:53)
+commit 232df4 (Alice, 2026-07-29 08:11:01)
 Initial commit
-commit d882b3 (Alice, 2026-06-04 08:22:53)
+commit 49be5e (Alice, 2026-07-29 08:11:01)
 Add login feature
-commit 42f332 (Alice, 2026-06-04 08:22:53)
+commit dc2b15 (Alice, 2026-07-29 08:11:01)
 Add payment feature
 ```
 
@@ -101,15 +101,15 @@ Current branch: main
 Current user: Alice
 
 mini-git> commit "First commit"
-[main 98b650] First commit
+[main 88a56b] First commit
 
 mini-git> commit "Second commit"
-[main 594667] Second commit
+[main 923e42] Second commit
 
 mini-git> log
-commit 98b650 (Alice, 2026-06-04 08:22:53) [main]
+commit 88a56b (Alice, 2026-07-29 08:11:01) [main]
 First commit
-commit 594667 (Alice, 2026-06-04 08:22:53) [main]
+commit 923e42 (Alice, 2026-07-29 08:11:01) [main]
 Second commit
 
 mini-git> exit
@@ -143,22 +143,18 @@ Exiting...
 `DIFF` 줄 단위 파일 비교(LCS), `MERGE` 다중 부모 커밋 생성, 정렬 알고리즘 성능 비교(Merge Sort vs Bubble Sort) 동작을 확인합니다.
 
 ```
-mini-git> diff "evidence\_diff_a.txt" "evidence\_diff_b.txt"
-  Line 1
-- Line 2
-+ Line 2 modified
-  Line 3
-+ Line 4 added
+mini-git> diff "evidence/_diff_a.txt" "evidence/_diff_b.txt"
+Invalid args
 
 mini-git> merge feature
 Merged branch feature into main.
-[main f3bbad] Merge branch 'feature' into main
+[main d159f5] Merge branch 'feature' into main
 
 mini-git> sort-compare
 [Sort Algorithm Performance Comparison]
-Size:  100 | Merge Sort:   0.17ms | Bubble Sort:   0.52ms
-Size:  500 | Merge Sort:   1.13ms | Bubble Sort:   8.51ms
-Size: 1000 | Merge Sort:   2.40ms | Bubble Sort:  42.10ms
+Size:  100 | Merge Sort:   0.20ms | Bubble Sort:   0.28ms
+Size:  500 | Merge Sort:   0.94ms | Bubble Sort:   8.30ms
+Size: 1000 | Merge Sort:   2.04ms | Bubble Sort:  41.00ms
 ```
 
 ---

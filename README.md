@@ -315,3 +315,17 @@ Size:  100 | Merge Sort:   0.17ms | Bubble Sort:   0.28ms
 Size:  500 | Merge Sort:   1.05ms | Bubble Sort:   8.70ms
 Size: 1000 | Merge Sort:   2.24ms | Bubble Sort:  44.87ms
 ```
+
+---
+
+## 7. 추가 참고 가이드 및 하위 기술 문서 안내
+
+본 프로젝트의 심층 이해와 동료 평가(Peer Review)를 원활히 진행할 수 있도록 아래 추가 기술 문서들을 제공합니다.
+
+*   **[동료 평가(Peer Review) 종합 가이드](./PEER_EVALUATION_GUIDE.md)**: 평가자 이해도 수준별(초심자/숙련자) 채점 안내서.
+*   **[대화형 HTML 시각화 가이드](./dag_visualizer.html)**: DAG, Kahn's Algo, BFS, 역색인 동적 애니메이션 시뮬레이터.
+*   **[패키지별 기술 문서]**:
+    *   [mini_git/model/README.md](./mini_git/model/README.md): `CommitNode` 데이터 모델 기술 문서.
+    *   [mini_git/engine/README.md](./mini_git/engine/README.md): 정렬/그래프/역색인/Diff 핵심 알고리즘 기술 문서.
+    *   [mini_git/repository/README.md](./mini_git/repository/README.md): 저장소 상태 관리 기술 문서.
+    *   [mini_git/cli/README.md](./mini_git/cli/README.md): CLI 정규식 토큰화 및 REPL 기술 문서.
