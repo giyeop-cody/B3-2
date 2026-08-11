@@ -19,7 +19,7 @@
 | sorted() 금지 | Python 내장 정렬 사용 안 함 | 계산기 없이 암산 |
 | 버블 정렬 | 인접한 두 개를 비교하며 교환 | 거품이 위로 올라가듯 |
 | 퀵 정렬 | 기준점을 잡고 좌우로 나눔 | 큰 것/작은 것으로 분류 |
-| 이진 탐색 | 정렬된 데이터를 반씩 줄여가며 찾기 | 전화번호부를 반씩 펼치기 |
+| 병합 정렬 | 반씩 나눠 정렬 후 합치기 | 반씩 나눠서 정리 |
 | mtime | 파일이 마지막으로 수정된 시간 | 마지막으로 수정한 날짜 |
 | diff | 무엇이 바뀌었는지 비교 | 수정 전후 비교 |
 
@@ -44,15 +44,15 @@ def bubble_sort(arr):
                 arr[j], arr[j+1] = arr[j+1], arr[j]
 ```
 
-### 이진 탐색
+### 병합 정렬 (Merge Sort)
 ```python
-def binary_search(arr, target):
-    lo, hi = 0, len(arr)-1
-    while lo <= hi:
-        mid = (lo+hi)//2
-        if arr[mid] == target: return mid
-        elif arr[mid] < target: lo = mid+1
-        else: hi = mid-1
+```python
+def merge_sort(arr, key_func):
+    if len(arr) <= 1: return arr
+    mid = len(arr) // 2
+    left = merge_sort(arr[:mid], key_func)
+    right = merge_sort(arr[mid:], key_func)
+    return merge(left, right, key_func)
 ```
 
 ## 5. 잡/워크
