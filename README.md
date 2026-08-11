@@ -332,3 +332,29 @@ Size: 1000 | Merge Sort:   2.24ms | Bubble Sort:  44.87ms
     *   [mini_git/engine/README.md](./mini_git/engine/README.md): 정렬/그래프/역색인/Diff 핵심 알고리즘 기술 문서.
     *   [mini_git/repository/README.md](./mini_git/repository/README.md): 저장소 상태 관리 기술 문서.
     *   [mini_git/cli/README.md](./mini_git/cli/README.md): CLI 정규식 토큰화 및 REPL 기술 문서.
+
+---
+
+## 🚀 실행 방법
+
+### 설치
+```bash
+pip install -r requirements.txt  # 표준 라이브러리만 사용
+```
+
+### 실행
+```bash
+python mini_git/main.py
+```
+
+---
+
+## 🧪 테스트 방법
+
+### 수동 테스트
+1. `init` → 저장소 초기화
+2. 파일 생성 후 `add` → 스테이징
+3. `commit` → 변경 이력 저장
+4. 파일 수정 후 `diff` → 변경 내용 확인
+5. `log` → 커밋 이력 확인 (정렬 알고리즘 동작)
+6. `checkout` → 이전 버전 복원
